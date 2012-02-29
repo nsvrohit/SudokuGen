@@ -1,4 +1,4 @@
-class Backtrack():
+class BacktrackArray():
 	"""A Bytearray that supports backtracking."""
 	def __init__(self, initial = ''):
 		self.stack = []
