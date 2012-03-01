@@ -72,6 +72,41 @@ def eliminate(values, c, d):
 				return False
 	return values
 
+def display(values):
+	"Display the values in a grid"
+	width = 1 + max(len(values[c]) for c in cells)
+	line = '+'.join(['-'*(width*3)]*3)
+	for r in rows:
+		print ''.join(values[r+c].center(width) + 
+				('|' if c in '36' else '')
+				for c in cols)
+		if r in 'CF':
+			print line
+	print
+
+def some(seq):
+	"Return some element of seq that is true."
+	for e in seq:
+		if e:
+			return e
+	return False
+
+def search(values):
+	"Using depth-first search and propagation, try all possible values."
+	if values is False:
+		return False
+	if all(len(values[c]) == 1 for c in cells):
+		return Values
+
+	# Choose unfilled cell c with the fewest possibilities
+	n, c = min((len(values[c]), c) for c in squares if len(values[c]) > 1)
+
+	return some(search(assign(values.copy(), s, d)) for d in values[c])
+
+
+def solve(grid):
+	return search(parse_grid(grid))
+
 if __name__ == '__main__':
 	for rule in rules:
 		print rule
