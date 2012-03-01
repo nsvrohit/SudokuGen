@@ -4,6 +4,9 @@
 # Based upon Peter Norvig's Sudoku solver
 #
 
+import time
+import random
+
 def cross(xs, ys):
 	return [x+y for x in xs for y in ys]
 
@@ -107,6 +110,53 @@ def search(values):
 def solve(grid):
 	return search(parse_grid(grid))
 
+def solve_all(grids, name='', showif=0.0):
+	"""Attempt to solve a sequence of grids. Report results.
+	When showif is a number of seconds, display puzzles that take longer.
+	When showif is None, don't display any puzzles."""
+	def time_solve(grid):
+		start = time.clock()
+		values = solve(grid)
+		t = time.clock() - start
+
+		if showif is not None and t > showif:
+			display(grid_values(grid))
+			if values:
+				display(values)
+			print '(%.2f seconds)\n' % t
+		return (t, solved(values))
+	times, results = zip(*[time_solve(grid) for grid in grids])
+	N = len(grids)
+	if N > 1:
+		print "Solved %d of %d %s puzzles (avg %.2f secs (%d Hz), max %.2f secs)." % (sum(results), N, name, sum(times)/N, N/sum(times), max(times))
+
+def solved(values):
+	"A puzzle is solved if each unit is a permutation of the digits 1 to 9."
+	def group_solved(group):
+		return set(values[c] for c in group) == set(digits)
+	return values is not False and all(group_solved(group) for group in groups)
+
+def from_file(filename, sep='\n'):
+	"Parse a file into a list of strings, separated by sep."
+	return file(filename).read().strip().split(sep)
+
+def shuffled(seq):
+	"Return a randomly shuffled copy of the input sequence."
+	seq = list(seq)
+	random.shuffle(seq)
+	return seq
+
+def random_puzzle(N=17):
+	"""Make a random puzzle with N or more assignments. Restart on contradictions. Note the resulting puzzle is not guaranteed to be solvable, but empirically about 99.8% of them are. Some have multiple solutions."""
+	values = dict((c, digits) for c in cells)
+	for c in shuffled(cells):
+		if not assign(values, c, random.choice(values[c])):
+			break
+		ds = [values[c] for c in cells if len(values[c]) == 1]
+		if len(ds) >= N and len(set(ds)) >= 8:
+			return ''.join(values[c] if len(values[c]) == 1 else '.' for c in cells)
+	return random_puzzle(N) # Give up, try again
+
 if __name__ == '__main__':
-	for rule in rules:
-		print rule
+	test()
+	solve_all([random_puzzle() for _ in range(99)], "random", 100.0)
